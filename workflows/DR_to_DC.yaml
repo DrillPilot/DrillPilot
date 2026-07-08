@@ -1,0 +1,32 @@
+drill: "DC Rollback"
+
+steps:
+
+  - id: stop_app_dr
+    target: app01-dr
+    action: stop_service
+    on_failure: pause_and_notify
+
+  - id: promote_dc
+    target: mysql-dc
+    action: promote
+    depends_on: [stop_app_dr]
+    on_failure: pause_and_notify
+
+  - id: demote_dr
+    target: mysql-dr
+    action: demote
+    depends_on: [promote_dc]
+    on_failure: pause_and_notify
+
+  - id: reverse_sync
+    target: mysql-dr
+    action: reverse_sync
+    depends_on: [demote_dr]
+    on_failure: pause_and_notify
+
+  - id: start_app_dc
+    target: app01-dc
+    action: start_service
+    depends_on: [reverse_sync]
+    on_failure: pause_and_notify

@@ -1,0 +1,23 @@
+ssh:
+  user: root
+  key_file: C:\Users\Administrator\.ssh\orchestrator_key
+app_servers:
+- name: app01-dc
+  ip: 33.33.33.174
+  os: linux
+  service: httpd
+- name: app01-dr
+  ip: 33.33.33.44
+  os: linux
+  service: httpd
+databases:
+- name: mysql-dc
+  type: mysql
+  ip: 33.33.33.174
+  role: primary
+- name: mysql-dr
+  type: mysql
+  ip: 33.33.33.44
+  role: secondary
+notifications:
+  slack_webhook_env: SLACK_WEBHOOK_URL

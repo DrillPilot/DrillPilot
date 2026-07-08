@@ -1,0 +1,38 @@
+drill: "DR test drill - app01"
+
+steps:
+
+  - id: stop_app_dc
+    target: app01-dc
+    action: stop_service
+    on_failure: pause_and_notify
+
+  - id: check_replication
+    target: mysql-dr
+    action: check_replication
+    depends_on: [stop_app_dc]
+    on_failure: pause_and_notify
+
+  - id: promote_dr
+    target: mysql-dr
+    action: promote
+    depends_on: [check_replication]
+    on_failure: pause_and_notify
+
+  - id: demote_dc
+    target: mysql-dc
+    action: demote
+    depends_on: [promote_dr]
+    on_failure: pause_and_notify
+
+  - id: reverse_sync
+    target: mysql-dc
+    action: reverse_sync
+    depends_on: [demote_dc]
+    on_failure: pause_and_notify
+
+  - id: start_app_dr
+    target: app01-dr
+    action: start_service
+    depends_on: [reverse_sync]
+    on_failure: pause_and_notify

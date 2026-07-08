@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DrillPilot — DR Drill Orchestrator</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e12;
+      --panel: #11171d;
+      --panel-2: #161d24;
+      --border: #212b33;
+      --border-soft: #1a222a;
+      --text: #e6edf1;
+      --text-dim: #8A93A6;
+      --muted: #7c8b96;
+      --accent: #2dd4bf;
+      --accent-dim: #12403c;
+      --green: #3ecf6e;
+      --green-dim: #0f2c1a;
+      --red: #f0555a;
+      --red-dim: #341417;
+      --amber: #f0a84e;
+      --amber-dim: #332510;
+      --radius: 10px;
+      --success: #3ECF8E;
+      --danger: #F0555B;
+      --warning: #F0B94D;
+      --font-ui: 'IBM Plex Sans', -apple-system, Segoe UI, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 28px;
+      border-bottom: 1px solid var(--border-soft);
+      gap: 16px;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    .brand {
+      position: absolute;
+      left: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .brand h1 {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      margin: 0;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: 6px;
+    }
+
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--panel-2);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      margin: 0 auto;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .logout-btn {
+      position: absolute;
+      right: 28px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .logout-btn:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: rgba(240, 85, 91, .08);
+    }
+
+    main {
+      padding: 24px 28px 40px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    /* ---------- Orchestrator strip ---------- */
+    .orch-strip {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      flex-wrap: wrap;
+    }
+
+    .orch-node {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .orch-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .orch-meta .name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .orch-meta .sub {
+      color: var(--muted);
+      font-size: 11.5px;
+      margin-top: 2px;
+    }
+
+    .orch-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    .orch-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .reach-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .reach-dot.ok {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .reach-dot.bad {
+      background: var(--red);
+      box-shadow: 0 0 6px var(--red);
+    }
+
+    .arrow-line {
+      color: var(--border);
+      font-size: 11px;
+    }
+
+    /* ---------- Rack-style layout ---------- */
+    .rack-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 80px;
+      padding: 40px 0;
+    }
+
+    /* Top row: Orchestrator in center */
+    .top-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      width: 100%;
+      margin-bottom: 20px;
+      min-height: 160px;
+    }
+
+    .orchestrator-square {
+      width: 260px;
+      height: 130px;
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .orch-icon-large {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .orch-text {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .orch-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .orch-sub {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .orch-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .orch-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 1.5s infinite ease-in-out;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    /* SVG connector layer */
+    .connectors-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: visible;
+    }
+
+    .connector-line {
+      filter: drop-shadow(0 0 3px rgba(62, 207, 110, 0.65));
+    }
+
+    .connectors-svg circle {
+      filter: drop-shadow(0 0 4px rgba(62, 207, 110, 0.9));
+    }
+
+    /* Bottom row: DC and DR racks */
+    .rack-row {
+      display: flex;
+      justify-content: center;
+      gap: 200px;
+      width: 100%;
+      position: relative;
+    }
+
+    .replication-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: visible;
+    }
+
+    .rack {
+      width: 500px;
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      position: relative;
+    }
+
+    .rack.is-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-dim), 0 0 30px -8px rgba(45, 212, 191, .4);
+    }
+
+    .rack-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .rack-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .rack-sub {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .rack-tag {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: .05em;
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+
+    .rack-tag.active-tag {
+      background: var(--green-dim);
+      color: var(--green);
+      border-color: #1c4a2c;
+    }
+
+    /* Rack units */
+    .rack-units {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .rack-unit {
+      background: var(--panel-2);
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      padding: 20px 24px;
+      position: relative;
+    }
+
+    .rack-unit::before {
+      content: '';
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 5px;
+      height: 16px;
+      background: var(--border);
+      border-radius: 1px;
+    }
+
+    .rack-unit::after {
+      content: '';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 5px;
+      height: 16px;
+      background: var(--border);
+      border-radius: 1px;
+    }
+
+    .unit-label {
+      font-size: 13px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 12px;
+      padding-left: 20px;
+      font-weight: 700;
+    }
+
+    .unit-content {
+      padding: 0 20px;
+    }
+
+    .server-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--border-soft);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+
+    .server-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .svc-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .svc-icon.web {
+      background: #0f2630;
+      color: #4fc3d9;
+    }
+
+    .svc-icon.db {
+      background: #241733;
+      color: #b28ce8;
+    }
+
+    .server-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .server-info .name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .server-info .detail {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 1px;
+    }
+
+    .card-meta {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .status-pill .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .status-pill.running {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .status-pill.running .dot {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .status-pill.stopped {
+      background: rgba(240, 85, 91, .12);
+      color: var(--danger);
+    }
+
+    .status-pill.stopped .dot {
+      background: var(--danger);
+    }
+
+    .status-pill.unreachable {
+      background: rgba(240, 185, 77, .12);
+      color: var(--warning);
+    }
+
+    .status-pill.unreachable .dot {
+      background: var(--warning);
+    }
+
+    .status-pill.primary {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .status-pill.primary .dot {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .status-pill.standby {
+      background: rgba(240, 85, 91, .12);
+      color: var(--danger);
+    }
+
+    .status-pill.standby .dot {
+      background: var(--danger);
+    }
+
+    .refresh-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .15s;
+    }
+
+    .refresh-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent-dim);
+      background: var(--accent-dim);
+    }
+
+    .refresh-btn.spinning svg {
+      animation: spin .6s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .empty {
+      color: var(--text-dim);
+      font-size: 13px;
+      padding: 20px 4px;
+    }
+
+    /* ---------- Drill tab ---------- */
+    .drill-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 24px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    select,
+    button.primary {
+      font-family: var(--font-ui);
+      font-size: 13px;
+      border-radius: 8px;
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #08211D;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.primary:disabled {
+      background: var(--accent-dim);
+      color: var(--text-dim);
+      cursor: not-allowed;
+    }
+
+    button.resume {
+      background: var(--warning);
+      color: #2B1E00;
+      border: none;
+      font-weight: 600;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-left: auto;
+    }
+
+    .rail {
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 24px;
+    }
+
+    .rail-line {
+      position: absolute;
+      left: 9px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .step {
+      position: relative;
+      padding: 12px 0;
+    }
+
+    .step-dot {
+      position: absolute;
+      left: -28px;
+      top: 16px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--panel);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .step.done .step-dot {
+      border-color: var(--success);
+      background: var(--success);
+      color: #08211D;
+    }
+
+    .step.running .step-dot {
+      border-color: var(--accent);
+      background: var(--panel);
+    }
+
+    .step.running .step-dot::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.1s ease-in-out infinite;
+    }
+
+    .step.failed .step-dot {
+      border-color: var(--danger);
+      background: var(--danger);
+      color: #fff;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .4;
+        transform: scale(.7);
+      }
+    }
+
+    .step-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    .step.failed .step-row {
+      border-color: rgba(240, 85, 91, 0.4);
+      background: rgba(240, 85, 91, 0.06);
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .step-meta {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: auto;
+    }
+
+    .step-error {
+      font-size: 11px;
+      color: var(--danger);
+      margin-top: 4px;
+    }
+
+    .log-panel {
+      background: #0B0E13;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      height: 220px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .log-panel .line {
+      color: var(--text-dim);
+    }
+
+    .log-panel .line.err {
+      color: var(--danger);
+    }
+
+    .log-panel .line.ok {
+      color: var(--success);
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="dot"></span>
+      <h1>DrillPilot<span>DR Drill Orchestrator</span></h1>
+    </div>
+
+    <nav class="tabs">
+      <button class="tab-btn active" data-view="status">Status</button>
+      <button class="tab-btn" data-view="drill">DR Drill</button>
+    </nav>
+    
+    <button onclick="logout()" class="logout-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Logout
+    </button>
+  </header>
+
+  <main>
+    <!-- ============ TAB 1: STATUS ============ -->
+    <section class="view active" id="view-status">
+      <div class="rack-container">
+        <!-- Top: Orchestrator -->
+        <div class="top-row">
+          <div class="orchestrator-square" id="orchestrator">
+            <div class="orch-icon-large">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="3" width="18" height="7" rx="1.5" />
+                <rect x="3" y="14" width="18" height="7" rx="1.5" />
+                <circle cx="7" cy="6.5" r="1" />
+                <circle cx="7" cy="17.5" r="1" />
+              </svg>
+            </div>
+            <div class="orch-text">
+              <div class="orch-name">Orchestrator</div>
+              <div class="orch-sub">Neutral Zone</div>
+              <div class="orch-status">
+                <span class="orch-status-dot"></span>
+                Online
+              </div>
+            </div>
+          </div>
+          <!-- SVG connectors -->
+          <svg class="connectors-svg" id="connectorsSvg">
+            <path id="dcConnector" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path id="drConnector" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle id="dcStartDot" r="4" fill="#3ecf6e"/>
+            <circle id="dcEndDot" r="4" fill="#3ecf6e"/>
+            <circle id="drStartDot" r="4" fill="#3ecf6e"/>
+            <circle id="drEndDot" r="4" fill="#3ecf6e"/>
+          </svg>
+        </div>
+
+        <!-- Bottom: DC and DR racks -->
+        <div class="rack-row">
+          <svg class="replication-svg" id="replicationSvg">
+            <defs>
+              <marker id="arrowhead-repl" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#3ecf6e"/>
+              </marker>
+            </defs>
+            <path id="replicationArrow" fill="none" stroke-width="2" stroke-linecap="round" marker-end="url(#arrowhead-repl)"/>
+          </svg>
+          <div class="rack" id="dcRack">
+            <div class="rack-header">
+              <div>
+                <div class="rack-title">DC — Data Center</div>
+                <div class="rack-sub">Primary site</div>
+              </div>
+              <div class="rack-tag" id="dcTag">STANDBY</div>
+            </div>
+            <div class="rack-units" id="dcUnits">
+              <p class="empty">Loading…</p>
+            </div>
+          </div>
+
+          <div class="rack" id="drRack">
+            <div class="rack-header">
+              <div>
+                <div class="rack-title">DR — Disaster Recovery</div>
+                <div class="rack-sub">Failover site</div>
+              </div>
+              <div class="rack-tag" id="drTag">STANDBY</div>
+            </div>
+            <div class="rack-units" id="drUnits">
+              <p class="empty">Loading…</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TAB 2: DR DRILL ============ -->
+    <section class="view" id="view-drill">
+      <div class="drill-controls">
+        <div style="font-size: 12px; color: var(--text-dim); margin-right: 12px;">
+          Current Active Site: <strong id="currentActiveSite" style="color: var(--accent);">Detecting...</strong>
+        </div>
+        <select id="workflowSelect"></select>
+        <button class="primary" id="startBtn">Start drill</button>
+        <span class="step-meta" id="drillMeta"></span>
+      </div>
+      <div id="stepsWrap">
+        <p class="empty">No drill started yet.</p>
+      </div>
+      <div class="log-panel" id="logPanel"><span class="line">Logs will appear here once a drill starts.</span></div>
+    </section>
+  </main>
+
+  <script>
+    const API = "";
+    let currentRunId = null;
+    let drillSocket = null;
+    let lastStatusData = [];
+
+    const webIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+  <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>
+</svg>`;
+    const dbIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+  <ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v13c0 1.66 3.58 3 8 3s8-1.34 8-3v-13"/>
+  <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/>
+</svg>`;
+    const refreshIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 3v6h-6"/>
+</svg>`;
+
+    function inferKind(t) {
+      if (t.kind) return t.kind;
+      return /db|oracle|mysql|postgres|sql/i.test(t.service || t.name) ? 'db' : 'web';
+    }
+
+    // ---- single tab-switch handler (one source of truth) ----
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('view-' + btn.dataset.view).classList.add('active');
+      });
+    });
+
+    // ---- Tab 1: status via websocket ----
+    function rackUnitHtml(t) {
+      const kind = inferKind(t);
+      
+      // For databases, use role (primary/secondary) instead of status (running/stopped)
+      let statusClass, statusLabel;
+      if (kind === 'db') {
+        // Database: show role as Primary/Standby
+        const role = t.role || 'secondary';
+        statusClass = role === 'primary' ? 'primary' : 'standby';
+        statusLabel = role === 'primary' ? 'Primary' : 'Standby';
+      } else {
+        // Web servers: show running/stopped as before
+        statusClass = t.status;
+        statusLabel = t.status === 'running' ? 'Running' : t.status === 'stopped' ? 'Stopped' : 'Unreachable';
+      }
+      
+      const label = kind === 'db' ? 'Database Server' : 'Web Server';
+      
+      return `<div class="rack-unit" data-target="${t.name}" data-kind="${kind}">
+        <div class="unit-label">${label}</div>
+        <div class="unit-content" style="display: flex; align-items: center; gap: 14px;">
+          <div class="svc-icon ${kind}" style="width: 40px; height: 40px;">${kind === 'db' ? dbIcon : webIcon}</div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 16px; font-weight: 600;">${t.name}</div>
+            <div style="font-size: 13px; color: var(--text-dim);">${t.service || (kind === 'db' ? 'mysql' : 'httpd')}</div>
+          </div>
+          <div class="status-pill ${statusClass}" data-role="pill" style="font-size: 13px; padding: 6px 12px;">
+            <span class="dot" style="width: 6px; height: 6px;"></span>
+            <span data-role="text">${statusLabel}</span>
+          </div>
+          <button class="refresh-btn" data-role="refresh" title="Refresh" style="width: 32px; height: 32px;"><i class="fas fa-arrows-rotate"></i></button>
+          ${kind === 'web' ? `<button class="refresh-btn" data-role="appstatus" title="Launch App" style="width: 32px; height: 32px;"><i class="fas fa-arrow-up-right-from-square"></i></button>` : ''}
+        </div>
+      </div>`;
+    }
+
+    function renderStatus(data) {
+      lastStatusData = data;
+      const dc = data.filter(t => t.site === 'dc');
+      const dr = data.filter(t => t.site === 'dr');
+
+      document.getElementById('dcUnits').innerHTML =
+        dc.map(rackUnitHtml).join('') || '<p class="empty">No DC targets configured.</p>';
+      document.getElementById('drUnits').innerHTML =
+        dr.map(rackUnitHtml).join('') || '<p class="empty">No DR targets configured.</p>';
+
+      const dcActive = dc.some(t => inferKind(t) === 'web' && t.status === 'running');
+      const drActive = dr.some(t => inferKind(t) === 'web' && t.status === 'running');
+
+      document.getElementById('dcRack').classList.toggle('is-active', dcActive);
+      document.getElementById('drRack').classList.toggle('is-active', drActive);
+      document.getElementById('dcTag').textContent = dcActive ? 'ACTIVE' : 'STANDBY';
+      document.getElementById('dcTag').classList.toggle('active-tag', dcActive);
+      document.getElementById('drTag').textContent = drActive ? 'ACTIVE' : 'STANDBY';
+      document.getElementById('drTag').classList.toggle('active-tag', drActive);
+
+      // Draw SVG connectors
+      drawConnectors();
+
+      // Update current active site display in DR Drill tab
+      const activeSiteEl = document.getElementById('currentActiveSite');
+      if (dcActive) {
+        activeSiteEl.textContent = 'DC (Data Center)';
+      } else if (drActive) {
+        activeSiteEl.textContent = 'DR (Disaster Recovery)';
+      } else {
+        activeSiteEl.textContent = 'None (Both Standby)';
+      }
+    }
+
+    function drawConnectors() {
+      const orch = document.getElementById('orchestrator');
+      const dcRack = document.getElementById('dcRack');
+      const drRack = document.getElementById('drRack');
+      const svg = document.getElementById('connectorsSvg');
+      
+      if (!orch || !dcRack || !drRack || !svg) return;
+
+      const orchRect = orch.getBoundingClientRect();
+      const dcRect = dcRack.getBoundingClientRect();
+      const drRect = drRack.getBoundingClientRect();
+      const containerRect = document.querySelector('.top-row').getBoundingClientRect();
+
+      // Exit the orchestrator from its left/right edges, mid-height
+      const exitY = orchRect.top + orchRect.height * 0.5 - containerRect.top;
+      const leftX  = orchRect.left  - containerRect.left;
+      const rightX = orchRect.right - containerRect.left;
+
+      // Land exactly on the top-center edge of each rack — this is the
+      // "touch point" the dot markers sit on
+      const dcEndX = dcRect.left + dcRect.width / 2 - containerRect.left;
+      const dcEndY = dcRect.top - containerRect.top;
+      const drEndX = drRect.left + drRect.width / 2 - containerRect.left;
+      const drEndY = drRect.top - containerRect.top;
+
+      const dcPath = document.getElementById('dcConnector');
+      const drPath = document.getElementById('drConnector');
+
+      // Clean right-angle (L-shaped) route: out from the side, down to the
+      // midpoint, across, then straight down into the top of the rack
+      const midY = exitY + (dcEndY - exitY) * 0.55;
+      dcPath.setAttribute('d', `M ${leftX} ${exitY} L ${leftX - 40} ${exitY} L ${leftX - 40} ${midY} L ${dcEndX} ${midY} L ${dcEndX} ${dcEndY}`);
+      drPath.setAttribute('d', `M ${rightX} ${exitY} L ${rightX + 40} ${exitY} L ${rightX + 40} ${midY} L ${drEndX} ${midY} L ${drEndX} ${drEndY}`);
+
+      [dcPath, drPath].forEach(p => {
+        p.setAttribute('stroke', '#3ecf6e');
+        p.setAttribute('stroke-width', '3');
+        p.setAttribute('fill', 'none');
+        p.classList.add('connector-line');
+      });
+
+      // Dots mark exactly where each line touches the orchestrator and the rack
+      document.getElementById('dcStartDot').setAttribute('cx', leftX);
+      document.getElementById('dcStartDot').setAttribute('cy', exitY);
+      document.getElementById('dcEndDot').setAttribute('cx', dcEndX);
+      document.getElementById('dcEndDot').setAttribute('cy', dcEndY);
+      document.getElementById('drStartDot').setAttribute('cx', rightX);
+      document.getElementById('drStartDot').setAttribute('cy', exitY);
+      document.getElementById('drEndDot').setAttribute('cx', drEndX);
+      document.getElementById('drEndDot').setAttribute('cy', drEndY);
+
+      // Draw replication arrow between databases
+      drawReplicationArrow();
+    }
+
+    function drawReplicationArrow() {
+      const dcRack = document.getElementById('dcRack');
+      const drRack = document.getElementById('drRack');
+      const replicationArrow = document.getElementById('replicationArrow');
+      const replicationSvg = document.getElementById('replicationSvg');
+      
+      if (!dcRack || !drRack || !replicationArrow || !replicationSvg) return;
+
+      // Find database units in each rack
+      const dcDbUnit = dcRack.querySelector('.rack-unit[data-kind="db"]');
+      const drDbUnit = drRack.querySelector('.rack-unit[data-kind="db"]');
+      
+      if (!dcDbUnit || !drDbUnit) return;
+
+      const dcDbRect = dcDbUnit.getBoundingClientRect();
+      const drDbRect = drDbUnit.getBoundingClientRect();
+      const containerRect = document.querySelector('.rack-row').getBoundingClientRect();
+
+      // Determine which is primary based on status
+      const dcStatus = dcDbUnit.querySelector('[data-role="text"]').textContent;
+      const drStatus = drDbUnit.querySelector('[data-role="text"]').textContent;
+      
+      const dcIsPrimary = dcStatus === 'Primary';
+      const drIsPrimary = drStatus === 'Primary';
+
+      // Stop at the card's rectangle EDGE, not its center — DC's card sits
+      // to the left, DR's to the right, so the facing edges are DC's right
+      // border and DR's left border. This is what keeps the arrow from
+      // piercing through the badge/icon text inside either card.
+      const dcEdgeX = dcDbRect.right - containerRect.left;
+      const drEdgeX = drDbRect.left - containerRect.left;
+      const dcY = dcDbRect.top + dcDbRect.height / 2 - containerRect.top;
+      const drY = drDbRect.top + drDbRect.height / 2 - containerRect.top;
+
+      // Draw arrow from primary to standby, edge to edge
+      let arrowPath;
+      if (dcIsPrimary && !drIsPrimary) {
+        // DC to DR
+        arrowPath = `M ${dcEdgeX} ${dcY} L ${drEdgeX} ${drY}`;
+      } else if (drIsPrimary && !dcIsPrimary) {
+        // DR to DC
+        arrowPath = `M ${drEdgeX} ${drY} L ${dcEdgeX} ${dcY}`;
+      } else {
+        // No clear primary/secondary, hide arrow
+        arrowPath = '';
+      }
+
+      replicationArrow.setAttribute('d', arrowPath);
+      replicationArrow.setAttribute('stroke', '#3ecf6e');
+      replicationArrow.setAttribute('stroke-width', '2');
+      replicationArrow.setAttribute('fill', 'none');
+      replicationArrow.setAttribute('stroke-dasharray', '5,5');
+    }
+
+    // Redraw connectors on window resize
+    window.addEventListener('resize', drawConnectors);
+    // Initial draw after DOM is ready
+    setTimeout(drawConnectors, 100);
+    // Also redraw after status updates
+    const originalRenderStatus = renderStatus;
+    renderStatus = function(data) {
+      originalRenderStatus(data);
+      setTimeout(drawConnectors, 50);
+    };
+
+    document.querySelector('.rack-row').addEventListener('click', async (e) => {
+      const appBtn = e.target.closest('[data-role="appstatus"]');
+
+if (appBtn) {
+    const unit = appBtn.closest('.rack-unit');
+    const target = unit.dataset.target;
+
+    const urls = {
+        "app01-dc": "http://161.118.161.26/cgi-bin/status.sh",
+        "app01-dr": "http://161.118.188.51/cgi-bin/status.sh"
+    };
+
+    if (urls[target]) {
+        window.open(urls[target], "_blank");
+    }
+
+    return;
+}
+      const btn = e.target.closest('[data-role="refresh"]');
+      if (!btn) return;
+      const unit = btn.closest('.rack-unit');
+      const target = unit.dataset.target;
+      const kind = unit.dataset.kind;
+      const pill = unit.querySelector('[data-role="pill"]');
+      const text = unit.querySelector('[data-role="text"]');
+
+      btn.classList.add('spinning');
+      try {
+        const res = await fetch(API + '/api/status/' + encodeURIComponent(target));
+        const data = await res.json();
+        
+        // Apply same logic as rackUnitHtml for display
+        let statusClass, statusLabel;
+        if (kind === 'db') {
+          const role = data.role || 'secondary';
+          statusClass = role === 'primary' ? 'primary' : 'standby';
+          statusLabel = role === 'primary' ? 'Primary' : 'Standby';
+        } else {
+          statusClass = data.status;
+          statusLabel = data.status === 'running' ? 'Running' : data.status === 'stopped' ? 'Stopped' : 'Unreachable';
+        }
+        
+        pill.className = 'status-pill ' + statusClass;
+        text.textContent = statusLabel;
+      } catch (err) {
+        console.error('Refresh failed for', target, err);
+      }
+      btn.classList.remove('spinning');
+    });
+
+    function connectStatusSocket() {
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      const ws = new WebSocket(`${proto}://${location.host}/ws/status`);
+      ws.onopen = () => {
+        // Connection established
+      };
+      ws.onclose = () => {
+        setTimeout(connectStatusSocket, 3000);
+      };
+      ws.onerror = () => ws.close();
+      ws.onmessage = (evt) => {
+        const msg = JSON.parse(evt.data);
+        if (msg.type === 'status') renderStatus(msg.data);
+      };
+    }
+    connectStatusSocket();
+
+    // ---- Tab 2: drill control ----
+    async function loadWorkflows() {
+      try {
+        const res = await fetch(API + '/api/workflows');
+        const files = await res.json();
+        const sel = document.getElementById('workflowSelect');
+        
+        // Map file names to user-friendly labels
+        const workflowLabels = {
+          'workflows/DC_to_DR.yaml': 'DC --> DR (Failover)',
+          'workflows/DR_to_DC.yaml': 'DR --> DC (Rollback)'
+        };
+        
+        sel.innerHTML = files.map(f => 
+          `<option value="${f}">${workflowLabels[f] || f}</option>`
+        ).join('');
+      } catch (e) {
+        console.error('Could not load workflows', e);
+      }
+    }
+    loadWorkflows();
+
+    document.getElementById('startBtn').addEventListener('click', async () => {
+      const workflow_file = document.getElementById('workflowSelect').value;
+      const btn = document.getElementById('startBtn');
+      btn.disabled = true; btn.textContent = 'Starting…';
+      try {
+        const res = await fetch(API + '/api/drills/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workflow_file })
+        });
+        const data = await res.json();
+        currentRunId = data.run_id;
+        connectDrillSocket(currentRunId);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Start drill';
+      }
+    });
+
+    function connectDrillSocket(runId) {
+      if (drillSocket) drillSocket.close();
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      drillSocket = new WebSocket(`${proto}://${location.host}/ws/drills/${runId}`);
+      drillSocket.onmessage = (evt) => {
+        const msg = JSON.parse(evt.data);
+        if (msg.type === 'drill') renderDrill(msg.data);
+      };
+    }
+
+    function renderDrill(run) {
+      document.getElementById('drillMeta').textContent = `${run.name} — ${run.status}`;
+
+      const stepsHtml = run.steps.map(s => {
+        const icon = s.status === 'done' ? '✓' : s.status === 'failed' ? '!' : '';
+        const resumeBtn = s.status === 'failed'
+          ? `<button class="resume" onclick="resumeDrill('${run.run_id}')">Resume</button>`
+          : '';
+        return `<div class="step ${s.status}">
+      <div class="step-dot">${icon}</div>
+      <div class="step-row">
+        <div class="step-title">${s.id.replace(/_/g, ' ')}</div>
+        <div class="step-meta">${s.duration_s ? s.duration_s + 's' : s.status}</div>
+        ${resumeBtn}
+      </div>
+      ${s.error ? `<div class="step-error">${s.error}</div>` : ''}
+    </div>`;
+      }).join('');
+
+      document.getElementById('stepsWrap').innerHTML = `<div class="rail"><div class="rail-line"></div>${stepsHtml}</div>`;
+
+      const logPanel = document.getElementById('logPanel');
+      logPanel.innerHTML = run.logs.map(l => {
+        const cls = l.includes('FAILED') ? 'err' : l.includes('completed') || l.includes('succeeded') ? 'ok' : '';
+        return `<div class="line ${cls}">${l}</div>`;
+      }).join('');
+      logPanel.scrollTop = logPanel.scrollHeight;
+    }
+
+    async function resumeDrill(runId) {
+      await fetch(API + `/api/drills/${runId}/resume`, { method: 'POST' });
+    }
+  </script>
+  <script>
+  if(sessionStorage.getItem("authenticated") !== "true"){
+    window.location.replace("/");
+}
+let logoutTimer;
+
+function resetTimer(){
+    clearTimeout(logoutTimer);
+    logoutTimer=setTimeout(logout,300000); //5 min
+}
+
+function logout(){
+    sessionStorage.removeItem("authenticated");
+    window.location.replace("/");
+}
+
+["mousemove","mousedown","keypress","scroll","touchstart","click"]
+.forEach(e=>document.addEventListener(e,resetTimer));
+
+resetTimer();
+</script>
+
+</body>
+
+</html>
